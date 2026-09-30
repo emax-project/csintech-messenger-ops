@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CSIN-Tech 메신저 운영 가이드</title>
+<meta name="description" content="CSIN-Tech 메신저 설치·유지보수 가이드 — 서버 설치, 클라이언트 배포, 자동 업데이트, 장애 대응." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;450;600;650&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-pill">
+    <a class="nav-brand" href="index.html"><span class="dot"></span> CSIN-Tech 메신저 운영</a>
+    <div class="nav-links">
+      <a href="#stack">구성</a>
+      <a href="#quickstart">빠른 시작</a>
+      <a href="#maintenance">유지보수</a>
+      <a class="btn btn-primary" href="install-guide.html">가이드 전체 보기</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="eyebrow">관리자 · 운영자용</span>
+    <h1>CSIN-Tech 메신저,<br />설치부터 배포·장애 대응까지.</h1>
+    <p class="lead">
+      서버 최초 설치, 클라이언트 빌드·배포, 자동 업데이트, 정기 유지보수와
+      트러블슈팅까지 — 운영 담당자가 알아야 할 내용을 정리했습니다.
+    </p>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="install-guide.html">가이드 전체 보기</a>
+      <a class="btn btn-outline" href="https://emax-project.github.io/csintech-messenger-docs/">사용자 가이드로 이동</a>
+    </div>
+  </div>
+
+  <div class="hero-shot">
+    <div class="terminal">
+      <div class="dots"><span></span><span></span><span></span></div>
+      <pre><span class="cm"># 서버 최초 설치</span>
+<span class="c1">cp</span> .env.example .env
+<span class="c1">docker</span> compose up -d --build
+<span class="c1">docker</span> compose logs -f
+
+<span class="cm"># 상태 확인</span>
+<span class="c1">curl</span> http://localhost:3001/health
+<span class="c2">{"ok":true}</span></pre>
+    </div>
+  </div>
+</header>
+
+<section id="stack">
+  <div class="wrap">
+    <div class="section-head">
+      <h2 class="section-title">핵심 구성</h2>
+      <p class="section-sub">서버·클라이언트·배포 자동화까지 4가지 축으로 정리했습니다.</p>
+    </div>
+    <div class="grid">
+      <div class="card text-only"><div class="body">
+        <h3>서버 (API + PostgreSQL)</h3>
+        <p>Docker Compose로 DB·API 서버를 한 번에 실행합니다. LDAP 연동, 거래처 MSSQL 조직 동기화 등 선택 기능을 지원합니다.</p>
+      </div></div>
+      <div class="card text-only"><div class="body">
+        <h3>클라이언트 빌드·배포</h3>
+        <p>macOS(.dmg)/Windows(.exe) 설치 파일을 빌드해 GitHub Releases로 배포합니다. 설치된 앱은 electron-updater로 자동 업데이트됩니다.</p>
+      </div></div>
+      <div class="card text-only"><div class="body">
+        <h3>배포 자동화</h3>
+        <p>Self-hosted GitHub Actions Runner로 main 브랜치 push 시 서버 PC의 Docker가 자동 갱신됩니다. 서버 IP를 GitHub에 알릴 필요가 없습니다.</p>
+      </div></div>
+      <div class="card text-only"><div class="body">
+        <h3>거래처(파트너) 배포</h3>
+        <p>앱 이름·ID·기본 API 주소를 거래처용으로 분리 설정하고, MSSQL 조직 동기화·Synology LDAP 연동을 켤 수 있습니다.</p>
+      </div></div>
+    </div>
+  </div>
+</section>
+
+<section class="alt" id="quickstart">
+  <div class="wrap">
+    <div class="section-head">
+      <h2 class="section-title">빠른 시작</h2>
+      <p class="section-sub">DB만 Docker로 띄우고 서버는 로컬에서 실행하는 개발 환경 기준입니다.</p>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="num">1</div>
+        <div class="txt"><code>docker compose up -d db</code> 로 PostgreSQL을 띄우세요. (호스트 포트 5433)</div>
+      </div>
+      <div class="step">
+        <div class="num">2</div>
+        <div class="txt"><code>packages/server</code>에 <code>.env</code>를 두고 <code>DATABASE_URL</code>, <code>JWT_SECRET</code>을 설정하세요.</div>
+      </div>
+      <div class="step">
+        <div class="num">3</div>
+        <div class="txt"><code>npm run db:push</code>로 스키마를 반영한 뒤 <code>npm run dev</code>로 서버를 실행하세요.</div>
+      </div>
+      <div class="step">
+        <div class="num">4</div>
+        <div class="txt">클라이언트는 <code>npm run build:app</code>(전체) 또는 <code>build:app:mac</code> / <code>build:app:win</code>으로 빌드합니다.</div>
+      </div>
+    </div>
+    <div class="note">
+      <b>macOS에서 "손상되었기 때문에 열 수 없습니다" 경고가 뜰 때</b><br />
+      아직 앱 서명이 적용되지 않아 나타나는 정상적인 경고입니다. 사용자에게
+      <code>xattr -cr /Applications/앱이름.app</code> 안내가 필요합니다. 근본 해결은 Apple Developer 계정으로 코드사인·공증이 필요합니다(현재 보류).
+    </div>
+  </div>
+</section>
+
+<section id="maintenance">
+  <div class="wrap">
+    <div class="section-head">
+      <h2 class="section-title">정기 유지보수 명령어</h2>
+      <p class="section-sub">서버(<code>packages/server</code>) 기준입니다.</p>
+    </div>
+    <div class="cmd-table-wrap">
+      <table class="cmd-table">
+        <tr><th>작업</th><th>명령</th></tr>
+        <tr><td>관리자 계정 생성</td><td><code>npm run admin:create</code></td></tr>
+        <tr><td>LDAP 연동 점검</td><td><code>npm run ldap:check -- --uid &lt;아이디&gt;</code></td></tr>
+        <tr><td>조직도 동기화(드라이런)</td><td><code>npm run partner:org:sync:dry</code></td></tr>
+        <tr><td>조직도 동기화(실행)</td><td><code>npm run partner:org:sync</code></td></tr>
+        <tr><td>DB 덤프(백업)</td><td><code>./scripts/dump-db.sh</code></td></tr>
+        <tr><td>테스트 계정 시딩</td><td><code>npm run db:seed</code></td></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section class="alt">
+  <div class="wrap">
+    <div class="section-head">
+      <h2 class="section-title">자주 발생하는 문제</h2>
+      <p class="section-sub">더 자세한 점검 절차는 전체 가이드의 트러블슈팅 항목을 참고하세요.</p>
+    </div>
+    <div class="faq-list">
+      <details class="faq-row">
+        <summary>배포 후 웹/앱에서 흰 화면만 보여요.<span class="plus">+</span></summary>
+        <p class="answer"><code>/debug-client</code>로 클라이언트 파일이 서버 이미지에 포함됐는지 먼저 확인하고, <code>/health</code>로 API 서버 자체가 정상인지 확인하세요.</p>
+      </details>
+      <details class="faq-row">
+        <summary>채팅 목록이 "목록을 불러올 수 없습니다"라고 나와요.<span class="plus">+</span></summary>
+        <p class="answer">PostgreSQL이 떠 있지 않거나 <code>DATABASE_URL</code>이 잘못된 경우입니다. <code>docker compose ps</code>로 db 컨테이너 상태를 확인하세요.</p>
+      </details>
+      <details class="faq-row">
+        <summary>자동 업데이트가 동작하지 않아요.<span class="plus">+</span></summary>
+        <p class="answer">GitHub Releases에 <code>latest.yml</code>/<code>latest-mac.yml</code>이 함께 첨부됐는지 확인하세요. 비공개 저장소는 404가 나서 Generic 업데이트 서버 방식이 필요합니다.</p>
+      </details>
+      <details class="faq-row">
+        <summary>git pull만 했는데 DB에 변경사항이 반영 안 돼요.<span class="plus">+</span></summary>
+        <p class="answer">정상입니다. <code>git pull</code>은 코드만 갱신합니다. 서버 PC에서 <code>npm run db:push</code> 또는 <code>npm run db:migrate:deploy</code>를 한 번 더 실행해야 합니다.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <h2 class="section-title">가이드 문서</h2>
+      <p class="section-sub">아래 가이드에서 전체 내용을 확인하세요.</p>
+    </div>
+    <div class="guide-cards guide-cards-single">
+      <div class="guide-card">
+        <span class="tag">운영자용</span>
+        <h3>설치 · 유지보수 가이드</h3>
+        <ul>
+          <li>서버 최초 설치 및 환경 변수</li>
+          <li>클라이언트 빌드 · 배포 · 자동 업데이트</li>
+          <li>배포 자동화 (Self-hosted Runner)</li>
+          <li>거래처(파트너) 배포 특이사항</li>
+          <li>정기 유지보수 · 트러블슈팅 체크리스트</li>
+        </ul>
+        <a class="btn btn-primary go" href="install-guide.html">전체 가이드 보기</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="wordmark">CSIN-Tech 메신저 운영</div>
+    <p class="tagline">이 가이드는 서버 접근 권한이 있는 관리자·운영 담당자를 대상으로 합니다.</p>
+    <div class="cols">
+      <div class="links">
+        <span class="link-group-title">가이드</span>
+        <a href="install-guide.html">설치·유지보수 가이드</a>
+        <a href="https://emax-project.github.io/csintech-messenger-docs/">사용자 가이드</a>
+      </div>
+      <div class="links">
+        <span class="link-group-title">바로가기</span>
+        <a href="#stack">구성</a>
+        <a href="#quickstart">빠른 시작</a>
+        <a href="#maintenance">유지보수</a>
+      </div>
+      <div class="links">
+        <span class="link-group-title">정보</span>
+        <span>Made with Claude Code</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
